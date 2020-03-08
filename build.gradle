@@ -1,0 +1,50 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+version = 'local'
+
+def ENV = System.getenv()
+if (ENV.BUILD_NUMBER) {
+    version = "0.0.${System.getenv().BUILD_NUMBER}"
+}
+
+group = 'net.fabricmc'
+archivesBaseName = 'cfr'
+
+sourceSets {
+    main {
+        java.srcDirs = ['src']
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'org.benf.cfr.reader.Main'
+    }
+}
+
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			artifact jar
+		}
+	}
+
+	// select the repositories you want to publish to
+	repositories {
+		if (project.hasProperty('mavenPass')) {
+			maven {
+				url = "http://mavenupload.modmuss50.me/"
+				credentials {
+					username = "buildslave"
+					password = project.getProperty('mavenPass')
+				}
+			}
+		}
+	}
+}
