@@ -57,7 +57,7 @@ public class CodeAnalyserWholeClass {
         }
 
         if (options.getOption(OptionsImpl.SUGAR_ASSERTS)) {
-            resugarAsserts(classFile);
+            resugarAsserts(classFile, options);
         }
 
         tidyAnonymousConstructors(classFile);
@@ -512,10 +512,10 @@ public class CodeAnalyserWholeClass {
         }
     }
 
-    private static void resugarAsserts(ClassFile classFile) {
+    private static void resugarAsserts(ClassFile classFile, Options options) {
         Method staticInit = getStaticConstructor(classFile);
         if (staticInit != null) {
-            new AssertRewriter(classFile).sugarAsserts(staticInit);
+            new AssertRewriter(classFile, options).sugarAsserts(staticInit);
         }
     }
 
@@ -539,6 +539,12 @@ public class CodeAnalyserWholeClass {
         }
 
         rewriteUnreachableStatics(classFile, typeUsage);
+
+        detectFakeMethods(classFile, typeUsage);
+    }
+
+    private static void detectFakeMethods(ClassFile classFile, TypeUsageCollectingDumper typeUsage) {
+        FakeMethodRewriter.rewrite(classFile, typeUsage);
     }
 
     private static void rewriteUnreachableStatics(ClassFile classFile, TypeUsageCollectingDumper typeUsage) {

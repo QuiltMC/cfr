@@ -128,6 +128,12 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             methodConstructor = isEnum ? MethodConstructor.ENUM_CONSTRUCTOR : MethodConstructor.CONSTRUCTOR;
         } else if (initialName.equals(MiscConstants.STATIC_INIT_METHOD)) {
             methodConstructor = MethodConstructor.STATIC_CONSTRUCTOR;
+
+            // JVM Spec 2nd ed., chapter 4.6: All access flags except static for class initializers are ignored
+            // Pre java 7 class files even allow static initializers to be non-static
+            // See classFileParser.cpp#parse_method
+            accessFlags.clear();
+            accessFlags.add(AccessFlagMethod.ACC_STATIC);
         }
         this.isConstructor = methodConstructor;
         if (methodConstructor.isConstructor() && accessFlags.contains(AccessFlagMethod.ACC_STRICT)) {
@@ -148,7 +154,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             // to get the Method (this).
             this.codeAttribute.setMethod(this);
         }
-        this.methodPrototype = generateMethodPrototype(initialName, methodConstructor);
+        this.methodPrototype = generateMethodPrototype(options, initialName, methodConstructor);
         if (accessFlags.contains(AccessFlagMethod.ACC_BRIDGE) &&
                 // javac only ever generates bridges into instances,
                 // however kotlin loses useful info if we hide them.
@@ -182,19 +188,19 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     @Override
     public void collectTypeUsages(TypeUsageCollector collector) {
         methodPrototype.collectTypeUsages(collector);
-        collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleTypeAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleTypeAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME));
-        collector.collectFrom(attributes.getByName(AttributeAnnotationDefault.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeVisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeInvisibleAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeVisibleTypeAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeInvisibleTypeAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeVisibleParameterAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeRuntimeInvisibleParameterAnnotations.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeAnnotationDefault.ATTRIBUTE_NAME));
         if (codeAttribute != null) {
             codeAttribute.collectTypeUsages(collector);
             codeAttribute.analyse().collectTypeUsages(collector);
         }
         collector.collect(localClasses.keySet());
-        collector.collectFrom(attributes.getByName(AttributeExceptions.ATTRIBUTE_NAME));
+        collector.collectFromT(attributes.getByName(AttributeExceptions.ATTRIBUTE_NAME));
     }
 
     public boolean copyLocalClassesFrom(Method other) {
@@ -260,52 +266,87 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
      * Descriptor ConstantUTF8[(Ljava/lang/String;I)V]
      * Signature Signature:ConstantUTF8[()V]
      */
-    private MethodPrototype generateMethodPrototype(String initialName, MethodConstructor constructorFlag) {
-        AttributeSignature sig = getSignatureAttribute();
+    private MethodPrototype generateMethodPrototype(Options options, String initialName, MethodConstructor constructorFlag) {
+        AttributeSignature sig = options.getOption(OptionsImpl.USE_SIGNATURES) ?getSignatureAttribute() : null;
         ConstantPoolEntryUTF8 signature = sig == null ? null : sig.getSignature();
         ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(descriptorIndex);
-        ConstantPoolEntryUTF8 prototype;
-        if (signature == null) {
-            // This is 'fun'.  Eclipse doesn't provide a signature, and its descriptor is honest.
-            // java does, which means that javac's signature disagrees with the descriptor.
-            if (constructorFlag == MethodConstructor.ENUM_CONSTRUCTOR) {
-                constructorFlag = MethodConstructor.ECLIPSE_ENUM_CONSTRUCTOR;
-            }
-            prototype = descriptor;
-        } else {
-            prototype = signature;
-        }
         boolean isInstance = !accessFlags.contains(AccessFlagMethod.ACC_STATIC);
         boolean isVarargs = accessFlags.contains(AccessFlagMethod.ACC_VARARGS);
         boolean isSynthetic = accessFlags.contains(AccessFlagMethod.ACC_SYNTHETIC);
         DCCommonState state = cp.getDCCommonState();
-        MethodPrototype res;
-        try {
-            res = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, prototype, cp, isVarargs, isSynthetic, variableNamer);
-        } catch (MalformedPrototypeException e) {
-            // If we've failed to parse, and we're using the signature, we have to fall back to the descriptor.
-            if (prototype == signature) {
-                prototype = descriptor;
-                res = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, prototype, cp, isVarargs, isSynthetic, variableNamer);
-            } else {
-                throw e;
+        MethodPrototype sigproto = null;
+        MethodPrototype desproto;
+        boolean isEnum = constructorFlag == MethodConstructor.ENUM_CONSTRUCTOR;
+        if (signature == null) {
+            // This is 'fun'.  Eclipse doesn't provide a signature, and its descriptor is honest.
+            // java does, which means that javac's signature disagrees with the descriptor.
+            if (isEnum) {
+                constructorFlag = MethodConstructor.ECLIPSE_ENUM_CONSTRUCTOR;
             }
+        }
+        if (signature != null) {
+            try {
+                sigproto = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, signature, cp, isVarargs, isSynthetic, variableNamer, descriptor.getValue());
+            } catch (MalformedPrototypeException e) {
+                // deliberately empty.
+            }
+        }
+        try {
+            desproto = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, descriptor, cp, isVarargs, isSynthetic, variableNamer, descriptor.getValue());
+        } catch (MalformedPrototypeException e) {
+            if (sigproto == null) throw e;
+            // this shouln't be possible, but we might be able to handle it.
+            desproto = sigproto;
         }
         /*
          * Work around bug in inner class signatures.
          *
-         * http://stackoverflow.com/questions/15131040/java-inner-class-inconsistency-between-descriptor-and-signature-attribute-clas
+         * https://stackoverflow.com/questions/15131040/java-inner-class-inconsistency-between-descriptor-and-signature-attribute-clas
          */
-        if (classFile.isInnerClass()) {
-            if (signature != null) {
-                MethodPrototype descriptorProto = ConstantPoolUtils.parseJavaMethodPrototype(state, classFile, classFile.getClassType(), initialName, isInstance, constructorFlag, descriptor, cp, isVarargs, isSynthetic, variableNamer);
-                if (descriptorProto.getArgs().size() != res.getArgs().size()) {
-                    // error due to inner class sig bug.
-                    fixupInnerClassSignature(descriptorProto, res);
-                }
+        if (classFile.isInnerClass() && sigproto != null) {
+            if (desproto.getArgs().size() != sigproto.getArgs().size()) {
+                // error due to inner class sig bug.
+                fixupInnerClassSignature(desproto, sigproto);
             }
         }
-        return res;
+        if (sigproto == null) {
+            return desproto;
+        }
+        if (checkSigProto(desproto, sigproto, isEnum, classFile.isInnerClass() && constructorFlag.isConstructor())) {
+            return sigproto;
+        } else {
+            addComment(DecompilerComment.BAD_SIGNATURE);
+            return desproto;
+        }
+    }
+
+    private static boolean checkSigProto(MethodPrototype desproto, MethodPrototype sigproto, boolean isEnumConstructor, boolean isInnerConstructor) {
+        if (sigproto == null) return false;
+
+        List<JavaTypeInstance> desargs = desproto.getArgs();
+        List<JavaTypeInstance> sigargs = sigproto.getArgs();
+
+        int offset = 0;
+        if (desargs.size() != sigargs.size()) {
+            if (isInnerConstructor || isEnumConstructor) {
+                // anonymous inner classes will not map correctly unless we can infer
+                return true;
+            } else {
+                return false;
+            }
+        }
+        for (int x=0,len=sigargs.size();x<len;++x) {
+            JavaTypeInstance desarg = desargs.get(x+offset).getArrayStrippedType();
+            JavaTypeInstance sigarg = sigargs.get(x).getArrayStrippedType();
+            if (sigarg instanceof JavaGenericPlaceholderTypeInstance) {
+                // This could be a stronger check.
+                continue;
+            }
+            if (!sigarg.getDeGenerifiedType().equals(desarg.getDeGenerifiedType())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static void fixupInnerClassSignature(MethodPrototype descriptor, MethodPrototype signature) {
@@ -426,6 +467,10 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
             localAccessFlags.remove(AccessFlagMethod.ACC_ABSTRACT);
         }
         localAccessFlags.remove(AccessFlagMethod.ACC_VARARGS);
+        if (cp.getDCCommonState().getOptions().getOption(OptionsImpl.ATTRIBUTE_OBF)) {
+            localAccessFlags.remove(AccessFlagMethod.ACC_SYNTHETIC);
+            localAccessFlags.remove(AccessFlagMethod.ACC_BRIDGE);
+        }
         String prefix = CollectionUtils.join(localAccessFlags, " ");
 
         if (!prefix.isEmpty()) d.keyword(prefix);
@@ -525,7 +570,18 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
     }
 
     public void setComments(DecompilerComments comments) {
-        this.comments = comments;
+        if (this.comments == null) {
+            this.comments = comments;
+        } else {
+            this.comments.addComments(comments.getCommentCollection());
+        }
+    }
+
+    private void addComment(DecompilerComment comment) {
+        if (comments == null) {
+            comments = new DecompilerComments();
+        }
+        comments.addComment(comment);
     }
 
     public boolean isVisibleTo(JavaRefTypeInstance maybeCaller) {

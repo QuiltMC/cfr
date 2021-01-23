@@ -203,14 +203,15 @@ public class Mapping implements ObfuscationMapping {
         }
 
         @Override
-        public Dumper methodName(String s, MethodPrototype method, boolean special, boolean defines) {
-            ClassMapping c = erasedTypeMap.get(method.getClassType().getDeGenerifiedType());
+        public Dumper methodName(String s, MethodPrototype p, boolean special, boolean defines) {
+            JavaTypeInstance classType = p == null ? null : p.getClassType();
+            ClassMapping c = classType == null ? null : erasedTypeMap.get(classType.getDeGenerifiedType());
             if (c == null || special) {
-                delegate.methodName(s, method, special, defines);
+                delegate.methodName(s, p, special, defines);
                 return this;
             }
 
-            delegate.methodName(c.getMethodName(s, method.getSignatureBoundArgs(), Mapping.this, delegate), method, special, defines);
+            delegate.methodName(c.getMethodName(s, p.getSignatureBoundArgs(), Mapping.this, delegate), p, special, defines);
             return this;
         }
 

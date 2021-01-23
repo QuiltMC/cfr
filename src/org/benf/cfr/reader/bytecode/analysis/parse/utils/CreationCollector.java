@@ -1,7 +1,9 @@
 package org.benf.cfr.reader.bytecode.analysis.parse.utils;
 
 import org.benf.cfr.reader.bytecode.AnonymousClassUsage;
+import org.benf.cfr.reader.bytecode.analysis.loc.BytecodeLoc;
 import org.benf.cfr.reader.bytecode.analysis.opgraph.InstrIndex;
+import org.benf.cfr.reader.bytecode.analysis.opgraph.Op03SimpleStatement;
 import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
 import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
 import org.benf.cfr.reader.bytecode.analysis.parse.Statement;
@@ -106,6 +108,8 @@ public class CreationCollector {
     */
     public void condenseConstructions(Method method, DCCommonState dcCommonState) {
 
+        Map<LValue, StatementContainer> constructionTargets = MapFactory.newMap();
+
         for (Pair<LValue, StatementPair<MemberFunctionInvokation>> construction : collectedConstructions) {
             LValue lValue = construction.getFirst();
             StatementPair<MemberFunctionInvokation> constructionValue = construction.getSecond();
@@ -140,6 +144,7 @@ public class CreationCollector {
                  * class), vs ones which are being bound without being passed in.
                  */
                 ConstructorInvokationAnonymousInner constructorInvokationAnonymousInner = new ConstructorInvokationAnonymousInner(
+                        BytecodeLoc.NONE, // Embedded in the invokation.
                         memberFunctionInvokation,
                         inferredJavaType,
                         memberFunctionInvokation.getArgs(),
@@ -190,6 +195,7 @@ public class CreationCollector {
                 }
 
                 ConstructorInvokationSimple cis = new ConstructorInvokationSimple(
+                        BytecodeLoc.NONE, // in the invokation
                         memberFunctionInvokation,
                         inferredJavaType,
                         constructionType,
@@ -213,7 +219,7 @@ public class CreationCollector {
             if (lValue == null) {
                 replacement = new ExpressionStatement(constructorInvokation);
             } else {
-                replacement = new AssignmentSimple(lValue, constructorInvokation);
+                replacement = new AssignmentSimple(constructorInvokation.getLoc(), lValue, constructorInvokation);
 
                 if (lValue instanceof StackSSALabel) {
                     StackSSALabel stackSSALabel = (StackSSALabel) lValue;
@@ -225,6 +231,9 @@ public class CreationCollector {
             StatementContainer constructionContainer = constructionValue.getLocation();
             //noinspection unchecked
             constructionContainer.replaceStatement(replacement);
+            if (lValue != null) {
+                constructionTargets.put(lValue, constructionContainer);
+            }
         }
 
         for (Map.Entry<LValue, List<StatementContainer>> creations : collectedCreations.entrySet()) {
@@ -234,9 +243,36 @@ public class CreationCollector {
                     StackEntry stackEntry = ((StackSSALabel) lValue).getStackEntry();
                     stackEntry.decSourceCount();
                 }
+                // If the statement immediately after statement container dup'd this, move it after the construction.
+                StatementContainer x = constructionTargets.get(lValue);
+                if (x != null) {
+                    // If we've orphaned a dup, copy if after the target.
+                    moveDupPostCreation(lValue, statementContainer, x);
+                }
                 statementContainer.nopOut();
             }
         }
+    }
 
+    private void moveDupPostCreation(LValue lValue, StatementContainer oldCreation, StatementContainer oldConstruction) {
+        Op03SimpleStatement creatr = (Op03SimpleStatement)oldCreation;
+        Op03SimpleStatement constr = (Op03SimpleStatement)oldConstruction;
+        Op03SimpleStatement cretgt = creatr.getTargets().get(0);
+        if (constr == cretgt) return;
+        if (cretgt.getSources().size() != 1) return;
+        Statement s = cretgt.getStatement();
+        if (s instanceof ExpressionStatement) {
+            Expression e = ((ExpressionStatement) s).getExpression();
+            if (!(e instanceof StackValue)) return;
+        } else
+            if (s instanceof AssignmentSimple) {
+            Expression rv = s.getRValue();
+            if (!(rv instanceof StackValue)) return;
+            if (!((StackValue) rv).getStackValue().equals(lValue)) return;
+            if (!(s.getCreatedLValue() instanceof StackSSALabel)) return;
+        } else {
+            return;
+        }
+        cretgt.splice(constr);
     }
 }
