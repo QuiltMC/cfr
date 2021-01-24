@@ -103,7 +103,7 @@ public class LocalVariable extends AbstractLValue {
 
     @Override
     public Dumper dump(Dumper d, boolean defines) {
-        return name.dump(d, defines);
+        return name.dump(d, defines); // todo pass lv, lvt, start offset
     }
 
     @Override
@@ -173,5 +173,10 @@ public class LocalVariable extends AbstractLValue {
         result = 31 * result + idx;
         if (ident != null) result = 31 * result + ident.hashCode();
         return result;
+    }
+
+    // fabric
+    public Ident getIdent() {
+        return ident;
     }
 }

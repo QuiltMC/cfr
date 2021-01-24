@@ -65,13 +65,13 @@ public class ToStringDumper extends AbstractDumper {
     }
 
     @Override
-    public Dumper parameterName(String name, MethodPrototype method, int index, boolean defines) {
-        return identifier(name, null, defines);
+    public Dumper parameterName(String name, Object ref, MethodPrototype method, int index, boolean defines) {
+        return identifier(name, ref, defines);
     }
 
     @Override
     public Dumper variableName(String name, NamedVariable variable, boolean defines) {
-        return identifier(name, null, defines);
+        return identifier(name, variable, defines);
     }
 
     @Override

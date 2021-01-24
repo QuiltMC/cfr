@@ -287,8 +287,8 @@ public class TokenStreamDumper extends AbstractDumper {
     }
 
     @Override
-    public Dumper parameterName(String name, MethodPrototype method, int index, boolean defines) {
-        return identifier(name, null, defines);
+    public Dumper parameterName(String name, Object ref, MethodPrototype method, int index, boolean defines) {
+        return identifier(name, ref, defines);
     }
 
     @Override

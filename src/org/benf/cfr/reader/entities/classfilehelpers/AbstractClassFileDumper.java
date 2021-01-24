@@ -210,6 +210,7 @@ abstract class AbstractClassFileDumper implements ClassFileDumper {
     }
 
     void dumpComments(ClassFile classFile, Dumper d) {
+        d.dumpClassDoc(classFile.getClassType());
         DecompilerComments comments = classFile.getNullableDecompilerComments();
         if (comments == null) return;
         comments.dump(d);

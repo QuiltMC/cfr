@@ -55,6 +55,7 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
     private final String fieldName;
     private boolean disambiguate;
     private transient JavaTypeInstance cachedDecodedType;
+    private String descriptor = null; // fabric: use desc than generic type
 
     public Field(ByteData raw, final ConstantPool cp, final ClassFileVersion classFileVersion) {
         this.cp = cp;
@@ -102,6 +103,7 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
             AttributeSignature sig = getSignatureAttribute();
             ConstantPoolEntryUTF8 signature = sig == null ? null : sig.getSignature();
             ConstantPoolEntryUTF8 descriptor = cp.getUTF8Entry(descriptorIndex);
+            this.descriptor = descriptor.getValue();
             ConstantPoolEntryUTF8 prototype;
             if (signature == null) {
                 prototype = descriptor;
@@ -114,6 +116,13 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
             cachedDecodedType = ConstantPoolUtils.decodeTypeTok(prototype.getValue(), cp);
         }
         return cachedDecodedType;
+    }
+
+    public String getDescriptor() {
+        if (descriptor == null) {
+            getJavaTypeInstance();
+        }
+        return descriptor;
     }
 
     void setDisambiguate() {
@@ -149,6 +158,7 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
     }
 
     public void dump(Dumper d, String name, ClassFile owner, boolean asRecordField) {
+        d.dumpFieldDoc(this, owner.getClassType()); // fabric
         JavaTypeInstance type = getJavaTypeInstance();
 
         List<AnnotationTableEntry> declarationAnnotations = MiscAnnotations.BasicAnnotations(attributes);

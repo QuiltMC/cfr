@@ -30,8 +30,5 @@ public class CfrVersionInfo {
 
     /** String consisting of CFR version and Git commit hash */
     public static final String VERSION_INFO =
-            VERSION +
-                    (SNAPSHOT ?
-                            " (" + GIT_COMMIT_ABBREVIATED + (GIT_IS_DIRTY ? "-dirty" : "") + ")" :
-                            "");
+            VERSION + " (FabricMC " + GIT_COMMIT_ABBREVIATED + (GIT_IS_DIRTY ? "-dirty" : "") + ")";
 }

@@ -108,7 +108,7 @@ public class TypeUsageCollectingDumper implements Dumper {
     }
 
     @Override
-    public Dumper parameterName(String name, MethodPrototype method, int index, boolean defines) {
+    public Dumper parameterName(String name, Object ref, MethodPrototype method, int index, boolean defines) {
         return this;
     }
 

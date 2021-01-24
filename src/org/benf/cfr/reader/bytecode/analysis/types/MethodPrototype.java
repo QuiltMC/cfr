@@ -346,6 +346,7 @@ public class MethodPrototype implements TypeUsageCollectable {
                 syntheticArgs.addAll(tmp);
             }
         }
+        parameterLValues = null; // fabric - force cfr to update param local vars after synthetic redetection
     }
 
     public Map<Slot, SSAIdent> collectInitialSlotUsage(SSAIdentifierFactory<Slot, ?> ssaIdentifierFactory) {

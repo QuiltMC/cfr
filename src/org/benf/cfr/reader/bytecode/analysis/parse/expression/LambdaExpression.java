@@ -112,14 +112,14 @@ public class LambdaExpression extends AbstractExpression implements LambdaExpres
                 if (explicitType != null) {
                     d.dump(explicitType).print(" ");
                 }
-                d.dump(lValue);
+                lValue.dump(d, true); // set as definition
             }
             d.separator(")");
         } else {
             if (multi) d.separator("(");
             for (LValue lValue : args) {
                 first = StringUtils.comma(first, d);
-                d.dump(lValue);
+                lValue.dump(d, true); // set as definition
             }
             if (multi) d.separator(")");
         }

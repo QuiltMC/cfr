@@ -20,6 +20,7 @@ import org.benf.cfr.reader.bytecode.analysis.parse.expression.LambdaExpressionNe
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.MemberFunctionInvokation;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.NewObjectArray;
 import org.benf.cfr.reader.bytecode.analysis.parse.expression.StaticFunctionInvokation;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LambdaParameter;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
 import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.StackSSALabel;
 import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriter;
@@ -367,7 +368,9 @@ public class LambdaRewriter implements Op04Rewriter, ExpressionRewriter {
                 for (int n = 0; n < nLambdaArgs; ++n) {
                     LocalVariable original = originalParameters.get(n + offset);
                     String name = original.getName().getStringName();
-                    LocalVariable tmp = new LocalVariable(name, new InferredJavaType(targetFnArgTypes.get(n), InferredJavaType.Source.EXPRESSION));
+                    // fabric - custom dump for lambda parameters
+                    LocalVariable tmp = new LambdaParameter(name, new InferredJavaType(targetFnArgTypes.get(n), InferredJavaType.Source.EXPRESSION),
+                            lambdaMethod.getMethodPrototype(), n + offset);
                     anonymousLambdaArgs.add(tmp);
                     replacementParameters.add(new LValueExpression(tmp));
                 }

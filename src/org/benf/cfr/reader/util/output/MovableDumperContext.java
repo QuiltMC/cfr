@@ -1,6 +1,7 @@
 package org.benf.cfr.reader.util.output;
 
-class MovableDumperContext {
+// fabric: allow passing it onto child dumpers
+public class MovableDumperContext {
     BlockCommentState inBlockComment = BlockCommentState.Not;
     boolean atStart = true;
     boolean pendingCR = false;

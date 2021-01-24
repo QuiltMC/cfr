@@ -34,7 +34,7 @@ public class NamedVariableDefault implements NamedVariable {
 
     @Override
     public Dumper dumpParameter(Dumper d, MethodPrototype methodPrototype, int index, boolean defines) {
-        return d.parameterName(name, methodPrototype, index, defines);
+        return d.parameterName(name, this, methodPrototype, index, defines);
     }
 
     @Override

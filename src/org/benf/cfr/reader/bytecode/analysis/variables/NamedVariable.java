@@ -16,5 +16,13 @@ public interface NamedVariable extends Dumpable {
 
     Dumper dump(Dumper d, boolean defines);
 
-    Dumper dumpParameter(Dumper d, MethodPrototype methodPrototype, int index, boolean defines);
+    // fabric start
+    default Dumper dumpParameter(Dumper d, MethodPrototype prototype, int index, boolean defines) {
+        return dump(d, defines);
+    }
+
+    // start offset measured in instructions, not bytes
+    default Dumper dumpLocalVariable(Dumper d, int localVarIndex, Ident ident, int tableIndex, int startOffset, boolean defines) {
+        return dump(d, defines);
+    }
 }

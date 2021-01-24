@@ -150,7 +150,7 @@ public class LambdaExpressionFallback extends AbstractExpression implements Lamb
                 if (x > 0) d.separator(", ");
                 String arg = "arg_" + x;
                 args.add(arg);
-                d.identifier(arg, arg, true);
+                d.parameterName(arg, arg, lambdaFn, x, true);
             }
             if (multi) {
                 d.separator(")");

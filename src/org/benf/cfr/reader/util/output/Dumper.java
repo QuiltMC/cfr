@@ -51,9 +51,15 @@ public interface Dumper extends MethodErrorCollector {
 
     Dumper methodName(String name, MethodPrototype method, boolean special, boolean defines);
 
-    Dumper parameterName(String name, MethodPrototype method, int index, boolean defines);
+    Dumper parameterName(String name, Object ref, MethodPrototype method, int index, boolean defines);
 
+    @Deprecated // todo add lv, lvt indices and start offset
     Dumper variableName(String name, NamedVariable variable, boolean defines);
+
+    // fabric
+    default Dumper dumpClassDoc(JavaTypeInstance owner) { return this; }
+    default Dumper dumpMethodDoc(MethodPrototype method) { return this; }
+    default Dumper dumpFieldDoc(Field field, JavaTypeInstance owner) { return this; }
 
     Dumper identifier(String name, Object ref, boolean defines);
 

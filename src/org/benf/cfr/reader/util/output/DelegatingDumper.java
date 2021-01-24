@@ -95,8 +95,8 @@ public abstract class DelegatingDumper implements Dumper {
     }
 
     @Override
-    public Dumper parameterName(String name, MethodPrototype method, int index, boolean defines) {
-        delegate.parameterName(name, method, index, defines);
+    public Dumper parameterName(String name, Object ref, MethodPrototype method, int index, boolean defines) {
+        delegate.parameterName(name, ref, method, index, defines);
         return this;
     }
 

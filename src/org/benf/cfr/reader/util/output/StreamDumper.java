@@ -88,14 +88,14 @@ public abstract class StreamDumper extends AbstractDumper {
     }
 
     @Override
-    public Dumper parameterName(String name, MethodPrototype method, int index, boolean defines) {
-        identifier(name, null, defines);
+    public Dumper parameterName(String name, Object ref, MethodPrototype method, int index, boolean defines) {
+        identifier(name, ref, defines);
         return this;
     }
 
     @Override
     public Dumper variableName(String name, NamedVariable variable, boolean defines) {
-        identifier(name, null, defines);
+        identifier(name, variable, defines);
         return this;
     }
 

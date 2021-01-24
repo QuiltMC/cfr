@@ -567,6 +567,7 @@ public class Method implements KnowsRawSize, TypeUsageCollectable {
                 }
             }
         }
+        d.dumpMethodDoc(methodPrototype); // fabric
     }
 
     public void setComments(DecompilerComments comments) {
