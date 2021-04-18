@@ -52,6 +52,7 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
         StaticVariable staticVariable = entry.getFirst();
         AbstractConstructorInvokation constructorInvokation = entry.getSecond();
         d.fieldName(staticVariable.getFieldName(), staticVariable.getField(), classType, false, true);
+        d.dumpFieldDoc(staticVariable.getField(), classType);
 
         if (constructorInvokation instanceof ConstructorInvokationSimple) {
             List<Expression> args = constructorInvokation.getArgs();
