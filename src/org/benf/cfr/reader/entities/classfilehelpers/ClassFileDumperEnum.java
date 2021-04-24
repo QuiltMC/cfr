@@ -34,7 +34,7 @@ public class ClassFileDumperEnum extends AbstractClassFileDumper {
     private static void dumpHeader(ClassFile c, InnerClassDumpType innerClassDumpType, Dumper d) {
         d.print(getAccessFlagsString(c.getAccessFlags(), dumpableAccessFlagsEnum));
 
-        d.print("enum ").dump(c.getThisClassConstpoolEntry().getTypeInstance()).print(" ");
+        d.print("enum ").dump(c.getThisClassConstpoolEntry().getTypeInstance(), true).print(" ");
 
         ClassSignature signature = c.getClassSignature();
         List<JavaTypeInstance> interfaces = signature.getInterfaces();
