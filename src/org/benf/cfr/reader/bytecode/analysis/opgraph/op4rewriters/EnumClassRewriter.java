@@ -242,7 +242,7 @@ public class EnumClassRewriter {
                 ),
                 new MatchOneOf(
                     new ResetAfterTest(wcm, new CollectMatch("values", new StructuredAssignment(BytecodeLoc.NONE, wcm.getStaticVariable("v", classType, clazzAIJT), wcm.getNewArrayWildCard("v", 0, 1)))),
-                    new ResetAfterTest(wcm, new CollectMatch("values15", new StructuredAssignment(BytecodeLoc.NONE, wcm.getStaticVariable("v", classType, clazzAIJT), wcm.getStaticFunction("v", this.classType, new JavaArrayTypeInstance(1, this.classType), "$values")))),
+                    new ResetAfterTest(wcm, new CollectMatch("values15", new StructuredAssignment(BytecodeLoc.NONE, wcm.getStaticVariable("v", classType, clazzAIJT), wcm.getStaticFunction("v", this.classType, new JavaArrayTypeInstance(1, this.classType), null)))),
                     new ResetAfterTest(wcm, new CollectMatch("noValues", new StructuredAssignment(BytecodeLoc.NONE, wcm.getStaticVariable("v", classType, clazzAIJT), new NewObjectArray(BytecodeLoc.NONE, Collections.<Expression>singletonList(Literal.INT_ZERO), arrayType))))
                 )
         );
