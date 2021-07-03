@@ -55,7 +55,7 @@ public class ToStringDumper extends AbstractDumper {
     }
 
     @Override
-    public Dumper fieldName(String name, Field field, JavaTypeInstance owner, boolean hiddenDeclaration, boolean defines) {
+    public Dumper fieldName(String name, String descriptor, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines) {
         return identifier(name, null, defines);
     }
 

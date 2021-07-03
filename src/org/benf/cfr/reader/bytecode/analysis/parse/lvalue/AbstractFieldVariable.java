@@ -23,6 +23,7 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
     private final ClassFileField classFileField;
     private final String failureName; // if we can't get the classfileField.
     private final JavaTypeInstance owningClass;
+    private final String descriptor;
 
     AbstractFieldVariable(ConstantPoolEntry field) {
         super(getFieldType((ConstantPoolEntryFieldRef) field));
@@ -30,6 +31,7 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
         this.classFileField = getField(fieldRef);
         this.failureName = fieldRef.getLocalName();
         this.owningClass = fieldRef.getClassEntry().getTypeInstance();
+        this.descriptor = fieldRef.getNameAndTypeEntry().getDescriptor().getValue();
     }
 
     AbstractFieldVariable(ClassFileField field, JavaTypeInstance owningClass) {
@@ -37,6 +39,7 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
         this.classFileField = field;
         this.failureName = field.getFieldName();
         this.owningClass = owningClass;
+        this.descriptor = field.getField().getDescriptor();
     }
 
     AbstractFieldVariable(AbstractFieldVariable other) {
@@ -44,6 +47,7 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
         this.classFileField = other.classFileField;
         this.failureName = other.failureName;
         this.owningClass = other.owningClass;
+        this.descriptor = other.descriptor;
     }
 
     AbstractFieldVariable(InferredJavaType type, JavaTypeInstance clazz, String varName) {
@@ -51,6 +55,7 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
         this.classFileField = null;
         this.owningClass = clazz;
         this.failureName = varName;
+        this.descriptor = type.getJavaTypeInstance().getRawName(); // matching only
     }
 
     AbstractFieldVariable(InferredJavaType type, JavaTypeInstance clazz, ClassFileField classFileField) {
@@ -58,6 +63,7 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
         this.classFileField = classFileField;
         this.owningClass = clazz;
         this.failureName = null;
+        this.descriptor = classFileField.getField().getDescriptor();
     }
 
     @Override
@@ -128,6 +134,10 @@ public abstract class AbstractFieldVariable extends AbstractLValue {
 
     public Field getField() {
         return classFileField == null ? null : classFileField.getField();
+    }
+
+    public String getDescriptor() {
+        return descriptor;
     }
 
     @Override

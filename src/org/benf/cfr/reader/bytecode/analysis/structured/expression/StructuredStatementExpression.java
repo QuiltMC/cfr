@@ -25,13 +25,13 @@ public class StructuredStatementExpression extends AbstractExpression {
     private StructuredStatement content;
 
     public StructuredStatementExpression(InferredJavaType inferredJavaType, StructuredStatement content) {
-        super(BytecodeLoc.TODO, inferredJavaType);
+        super(content.getLoc(), inferredJavaType);
         this.content = content;
     }
 
     @Override
     public BytecodeLoc getCombinedLoc() {
-        return BytecodeLoc.TODO;
+        return getLoc();
     }
 
     /*

@@ -206,7 +206,7 @@ public class Field implements KnowsRawSize, TypeUsageCollectable {
             d.dump(comments);
             d.dump(jah);
         }
-        d.print(' ').fieldName(name, this, owner.getClassType(), false, true);
+        d.print(' ').fieldName(name, getDescriptor(), owner.getClassType(), false, false, true);
     }
 
     public boolean isAccessibleFrom(JavaRefTypeInstance maybeCaller, ClassFile classFile) {
