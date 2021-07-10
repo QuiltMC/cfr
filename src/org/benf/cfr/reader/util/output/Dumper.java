@@ -47,7 +47,8 @@ public interface Dumper extends MethodErrorCollector {
 
     Dumper packageName(JavaRefTypeInstance t);
 
-    Dumper fieldName(String name, Field field, JavaTypeInstance owner, boolean hiddenDeclaration, boolean defines);
+    // descriptor can be null for beautification (Math.PI) or dummy fields for equality checks
+    Dumper fieldName(String name, String descriptor, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines);
 
     Dumper methodName(String name, MethodPrototype method, boolean special, boolean defines);
 

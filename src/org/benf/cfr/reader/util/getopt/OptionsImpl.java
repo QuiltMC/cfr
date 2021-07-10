@@ -341,8 +341,11 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> REMOVE_INNER_CLASS_SYNTHETICS = register(new PermittedOptionProvider.Argument<Boolean>(
             "removeinnerclasssynthetics", defaultTrueBooleanDecoder,
             "Remove (where possible) implicit outer class references in inner classes"));
+    public static final PermittedOptionProvider.Argument<Boolean> RELINK_CONSTANTS = register(new PermittedOptionProvider.Argument<Boolean>(
+            "relinkconst", defaultTrueBooleanDecoder,
+            "Relink constants - if there is an inlined reference to a field, attempt to de-inline."));
     public static final PermittedOptionProvider.Argument<Boolean> RELINK_CONSTANT_STRINGS = register(new PermittedOptionProvider.Argument<Boolean>(
-            "relinkconststring", defaultTrueBooleanDecoder,
+            "relinkconststring", new DefaultChainBooleanDecoder(RELINK_CONSTANTS, false),
             "Relink constant strings - if there is a local reference to a string which matches a static final, use the static final."));
     public static final PermittedOptionProvider.Argument<Boolean> LIFT_CONSTRUCTOR_INIT = register(new PermittedOptionProvider.Argument<Boolean>(
             "liftconstructorinit", defaultTrueBooleanDecoder,
@@ -359,6 +362,9 @@ public class OptionsImpl implements Options {
     public static final PermittedOptionProvider.Argument<Boolean> SUGAR_BOXING = register(new PermittedOptionProvider.Argument<Boolean>(
             "sugarboxing", defaultTrueBooleanDecoder,
             "Where possible, remove pointless boxing wrappers"));
+    public static final PermittedOptionProvider.Argument<Boolean> SUGAR_RETRO_LAMBDA = register(new PermittedOptionProvider.Argument<Boolean>(
+            "sugarretrolambda", defaultFalseBooleanDecoder,
+            "Where possible, resugar uses of retro lambda"));
     public static final PermittedOptionProvider.Argument<Boolean> SHOW_CFR_VERSION = register(new PermittedOptionProvider.Argument<Boolean>(
             "showversion", defaultTrueBooleanDecoder,
             "Show used CFR version in header (handy to turn off when regression testing)"));
@@ -516,7 +522,7 @@ public class OptionsImpl implements Options {
             "aggressivedocopy", new DefaultingIntDecoder(0),
             "Clone code from impossible jumps into loops with 'first' test"));
     public static final PermittedOptionProvider.Argument<Integer> AGGRESSIVE_SIZE_REDUCTION_THRESHOLD = register(new PermittedOptionProvider.Argument<Integer>(
-            "aggressivesizethreshold", new DefaultingIntDecoder(15000),
+            "aggressivesizethreshold", new DefaultingIntDecoder(13000),
             "Opcode count at which to trigger aggressive reductions"));
     public static final PermittedOptionProvider.Argument<Boolean> STATIC_INIT_RETURN = register(new PermittedOptionProvider.Argument<Boolean>(
             "staticinitreturn", defaultTrueBooleanDecoder,

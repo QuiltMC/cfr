@@ -216,17 +216,18 @@ public class Mapping implements ObfuscationMapping {
         }
 
         @Override
-        public Dumper fieldName(String name, Field field, JavaTypeInstance owner, boolean hiddenDeclaration, boolean defines) {
+        public Dumper fieldName(String name, String descriptor, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines) {
             JavaTypeInstance deGenerifiedType = owner.getDeGenerifiedType();
             ClassMapping c = erasedTypeMap.get(deGenerifiedType);
             if (c == null || hiddenDeclaration) {
-                delegate.fieldName(name, field, owner, hiddenDeclaration, defines);
+                delegate.fieldName(name, descriptor, owner, hiddenDeclaration, isStatic, defines);
             } else {
                 delegate.fieldName(
-                        c.getFieldName(name, deGenerifiedType,this, Mapping.this, field.testAccessFlag(AccessFlag.ACC_STATIC)),
-                        field,
+                        c.getFieldName(name, deGenerifiedType,this, Mapping.this, isStatic),
+                        descriptor,
                         owner,
                         hiddenDeclaration,
+                        isStatic,
                         defines);
             }
             return this;

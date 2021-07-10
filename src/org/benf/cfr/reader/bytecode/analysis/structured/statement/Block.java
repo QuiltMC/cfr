@@ -376,7 +376,6 @@ public class Block extends AbstractStructuredStatement {
                     StructuredStatement nextStatement = next.getStatement();
                     if (nextStatement instanceof StructuredComment) {
                         next.nopOut(); // pointless.
-                        // Nothing.
                     } else if (nextStatement instanceof StructuredCatch) {
                         Set<BlockIdentifier> blocks = ((StructuredCatch) nextStatement).getPossibleTryBlocks();
                         if (!blocks.contains(tryBlockIdent)) {
@@ -384,25 +383,19 @@ public class Block extends AbstractStructuredStatement {
                             break;
                         }
                         structuredTry.addCatch(next.nopThisAndReplace());
-                        if (x < size) {
-                            next = containedStatements.get(x);
-                        } else {
-                            // We'll have to find some other way of getting the next statement, probably need a DFS :(
-                            next = null;
-                            finished = true;
-                        }
                     } else if (next.getStatement() instanceof StructuredFinally) {
                         structuredTry.setFinally(next.nopThisAndReplace());
-                        if (x < size) {
-                            next = containedStatements.get(x);
-                        } else {
-                            // We'll have to find some other way of getting the next statement, probably need a DFS :(
-                            next = null;
-                            finished = true;
-                        }
                     } else {
                         --x;
                         break;
+                    }
+
+                    if (x < size) {
+                        next = containedStatements.get(x);
+                    } else {
+                        // We'll have to find some other way of getting the next statement, probably need a DFS :(
+                        next = null;
+                        finished = true;
                     }
                 }
                 --x;
@@ -439,15 +432,18 @@ public class Block extends AbstractStructuredStatement {
         }
     }
 
-    public Set<Op04StructuredStatement> getNextAfter(int x) {
+    public Set<Op04StructuredStatement> getNextAfter(int x, boolean skipComments) {
         Set<Op04StructuredStatement> res = SetFactory.newSet();
         if (x == -1 || x > containedStatements.size()) return res;
         while (x != -1 && x < containedStatements.size()) {
             Op04StructuredStatement next = containedStatements.get(x);
-            res.add(containedStatements.get(x));
             if (next.getStatement() instanceof StructuredComment) {
+                if (!skipComments) {
+                    res.add(containedStatements.get(x));
+                }
                 ++x;
             } else {
+                res.add(containedStatements.get(x));
                 break;
             }
         }

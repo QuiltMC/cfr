@@ -1,5 +1,10 @@
 package org.benf.cfr.reader.util;
 
+import org.benf.cfr.reader.bytecode.analysis.parse.Expression;
+import org.benf.cfr.reader.bytecode.analysis.parse.LValue;
+import org.benf.cfr.reader.bytecode.analysis.parse.expression.LValueExpression;
+import org.benf.cfr.reader.bytecode.analysis.parse.lvalue.LocalVariable;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.util.functors.Predicate;
 
 import java.util.regex.Pattern;
@@ -41,5 +46,19 @@ public class MiscUtils {
      * up by letting code analysers say we're no good kids, hanging around wasting time.
      */
     public static void handyBreakPoint() {
+    }
+
+    public static boolean isThis(Expression obj, JavaTypeInstance thisType) {
+        if (!(obj instanceof LValueExpression)) return false;
+        LValue thisExp = ((LValueExpression) obj).getLValue();
+        return isThis(thisExp, thisType);
+    }
+
+    public static boolean isThis(LValue thisExp, JavaTypeInstance thisType) {
+        if (!(thisExp instanceof LocalVariable)) return false;
+        LocalVariable lv = (LocalVariable)thisExp;
+        if (!(lv.getIdx() == 0 && MiscConstants.THIS.equals(lv.getName().getStringName()))) return false;
+        if (!thisType.equals(lv.getInferredJavaType().getJavaTypeInstance())) return false;
+        return true;
     }
 }

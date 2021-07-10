@@ -82,6 +82,7 @@ public class MethodPrototype implements TypeUsageCollectable {
     private final List<Slot> syntheticArgs = ListFactory.newList();
     private final List<Slot> syntheticCaptureArgs = ListFactory.newList();
     private List<ParameterLValue> parameterLValues = null;
+    private final JavaTypeInstance owner; // fabric
 //    private static int sid = 0;
 //    private final int id = sid++;
 
@@ -143,6 +144,7 @@ public class MethodPrototype implements TypeUsageCollectable {
         this.name = name;
         this.fixedName = null;
         this.classFile = classFile;
+        this.owner = classType;
     }
 
     public OverloadMethodSet getOverloadMethodSet() {
@@ -453,6 +455,10 @@ public class MethodPrototype implements TypeUsageCollectable {
             types.add(type);
         }
         return types;
+    }
+
+    public JavaTypeInstance getOwner() {
+        return owner;
     }
 
     public JavaTypeInstance getClassType() {

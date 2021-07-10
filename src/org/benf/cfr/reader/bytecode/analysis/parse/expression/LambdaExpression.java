@@ -123,7 +123,9 @@ public class LambdaExpression extends AbstractExpression implements LambdaExpres
             }
             if (multi) d.separator(")");
         }
-        d.print(" -> ").dump(result);
+        d.print(" -> ");
+        d.informBytecodeLoc(result);
+        d.dump(result);
         d.removePendingCarriageReturn();
         return d;
     }

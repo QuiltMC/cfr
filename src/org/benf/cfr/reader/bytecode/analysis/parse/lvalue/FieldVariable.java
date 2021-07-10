@@ -11,8 +11,10 @@ import org.benf.cfr.reader.bytecode.analysis.parse.rewriters.ExpressionRewriterF
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueRewriter;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.LValueUsageCollector;
 import org.benf.cfr.reader.bytecode.analysis.parse.utils.SSAIdentifiers;
+import org.benf.cfr.reader.bytecode.analysis.types.JavaTypeInstance;
 import org.benf.cfr.reader.entities.ClassFileField;
 import org.benf.cfr.reader.entities.constantpool.ConstantPoolEntry;
+import org.benf.cfr.reader.entities.exceptions.ExceptionCheck;
 import org.benf.cfr.reader.state.TypeUsageCollector;
 import org.benf.cfr.reader.util.MiscConstants;
 import org.benf.cfr.reader.util.Troolean;
@@ -27,6 +29,11 @@ public class FieldVariable extends AbstractFieldVariable {
 
     public FieldVariable(Expression object, ConstantPoolEntry field) {
         super(field);
+        this.object = object;
+    }
+
+    public FieldVariable(Expression object, ClassFileField field, JavaTypeInstance owningClass) {
+        super(field, owningClass);
         this.object = object;
     }
 
@@ -90,6 +97,17 @@ public class FieldVariable extends AbstractFieldVariable {
         return false;
     }
 
+    @Override
+    public boolean canThrow(ExceptionCheck caught) {
+        if (!super.canThrow(caught))  {
+            return false;
+        }
+        if (objectIsThis()) {
+            return false;
+        }
+        return true;
+    }
+
     private boolean objectIsIllegalThis() {
         if (object instanceof LValueExpression) {
             LValue lValue = ((LValueExpression) object).getLValue();
@@ -115,7 +133,7 @@ public class FieldVariable extends AbstractFieldVariable {
                 object.dumpWithOuterPrecedence(d, getPrecedence(), Troolean.NEITHER).separator(".");
             }
         }
-        return d.fieldName(getFieldName(), getField(), getOwningClassType(), isHiddenDeclaration(), false);
+        return d.fieldName(getFieldName(), getDescriptor(), getOwningClassType(), isHiddenDeclaration(), false,false);
     }
 
     @Override

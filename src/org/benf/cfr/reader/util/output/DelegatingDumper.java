@@ -83,8 +83,8 @@ public abstract class DelegatingDumper implements Dumper {
     }
 
     @Override
-    public Dumper fieldName(String name, Field field, JavaTypeInstance owner, boolean hiddenDeclaration, boolean defines) {
-        delegate.fieldName(name, field, owner, hiddenDeclaration, defines);
+    public Dumper fieldName(String name, String descriptor, JavaTypeInstance owner, boolean hiddenDeclaration, boolean isStatic, boolean defines) {
+        delegate.fieldName(name, descriptor, owner, hiddenDeclaration, isStatic, defines);
         return this;
     }
 
